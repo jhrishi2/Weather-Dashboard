@@ -3,30 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Weather - Davis Style RR</title>
+  <title>My Weather Station</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #0f172a; color: #e2e8f0; text-align: center; }
-    .card { background: #1e2937; padding: 25px; border-radius: 16px; margin: 20px auto; max-width: 600px; }
-    .rr { font-size: 3.5rem; font-weight: bold; color: #67e8f9; margin: 10px 0; }
-    .label { color: #94a3b8; font-size: 1.1rem; }
-    button { padding: 12px 30px; background: #22d3ee; color: black; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; padding: 20px; 
+      background: linear-gradient(135deg, #0f172a, #1e2937); 
+      color: #e2e8f0; 
+    }
+    .container { max-width: 1000px; margin: auto; }
+    .card { 
+      background: rgba(30, 41, 55, 0.95); 
+      padding: 20px; 
+      border-radius: 16px; 
+      margin: 15px 0; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    h1 { text-align: center; color: #67e8f9; }
+    .big-number { font-size: 3.8rem; font-weight: bold; margin: 5px 0; }
+    .section { margin: 30px 0; }
+    .row { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+    .item { flex: 1; min-width: 280px; }
+    .rr { color: #22d3ee; }
   </style>
 </head>
 <body>
-  <h1>🌧️ My Weather Station - Davis Style Rain Rate</h1>
-  
-  <div class="card">
-    <p class="label">Ambient Official Rain Rate</p>
-    <div id="ambient-rr" class="rr">-- in/hr</div>
-  </div>
+  <div class="container">
+    <h1>🌧️ My Personal Weather Station</h1>
 
-  <div class="card">
-    <p class="label">🟢 Davis-like Instant Rain Rate</p>
-    <div id="davis-rr" class="rr">-- in/hr</div>
-    <p class="label" id="status">Waiting for data...</p>
-  </div>
+    <div class="section">
+      <div class="row">
+        <!-- Temperature Card -->
+        <div class="card item">
+          <h2>TEMPERATURE</h2>
+          <div id="temp" class="big-number">--°C</div>
+          <div>Feels Like: <span id="feelslike">--°C</span></div>
+        </div>
 
-  <button onclick="fetchData()">🔄 Refresh Now</button>
+        <!-- Wind Card -->
+        <div class="card item">
+          <h2>WIND</h2>
+          <div id="wind" class="big-number">-- km/h</div>
+          <div id="winddir">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="row">
+        <!-- Rainfall Card -->
+        <div class="card item">
+          <h2>RAINFALL</h2>
+          <div id="totalrain" class="big-number">-- mm</div>
+          <div class="rr">
+            Current RR: <span id="current-rr" class="big-number" style="font-size:2.5rem;">-- mm/h</span>
+          </div>
+          <div>Davis-style Instant RR: <span id="davis-rr" class="big-number" style="font-size:2.2rem;color:#67e8f9;">-- mm/h</span></div>
+        </div>
+
+        <!-- Humidity & Others -->
+        <div class="card item">
+          <h2>OTHER</h2>
+          <div>Humidity: <span id="humidity">-- %</span></div>
+          <div>Pressure: <span id="pressure">-- hPa</span></div>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="fetchData()" style="display:block;margin:20px auto;padding:15px 30px;font-size:1.1rem;">🔄 Refresh Data</button>
+  </div>
 
   <script>
     const API_KEY = '4300811983344786a59530f53647923c9a5a5141ea0348f59eb5ca3694dc10dc';
@@ -42,10 +87,21 @@
         const data = await res.json();
         const d = data[0];
 
-        document.getElementById('ambient-rr').innerText = `${(d.rainRate || 0).toFixed(2)} in/hr`;
+        // Fill the dashboard
+        document.getElementById('temp').innerText = (d.tempf ? ((d.tempf - 32) * 5/9).toFixed(1) : '--') + '°C';
+        document.getElementById('feelslike').innerText = (d.feelsLike ? ((d.feelsLike - 32) * 5/9).toFixed(1) : '--') + '°C';
+        document.getElementById('wind').innerText = (d.windspeedmph ? (d.windspeedmph * 1.60934).toFixed(1) : '--') + ' km/h';
+        document.getElementById('winddir').innerText = (d.winddir || '--') + '°';
+        document.getElementById('humidity').innerText = d.humidity || '--';
+        document.getElementById('pressure').innerText = d.baromrelin || '--';
+        document.getElementById('totalrain').innerText = (d.hourlyrainin || d.dailyrainin || 0).toFixed(1) + ' mm';
 
+        // Ambient RR
+        document.getElementById('current-rr').innerText = (d.rainRate || 0).toFixed(1) + ' mm/h';
+
+        // Davis-style Instant RR
         const now = Date.now();
-        const currentRain = d.hourlyrainin || d.dailyrainin || 0;
+        const currentRain = d.hourlyrainin || 0;
 
         if (lastRain !== null && lastTime !== null) {
           const rainDelta = currentRain - lastRain;
@@ -54,14 +110,14 @@
           if (minutesDelta > 0 && rainDelta > 0) {
             customRR = (rainDelta / minutesDelta) * 60;
           }
-          document.getElementById('davis-rr').innerText = `${customRR.toFixed(2)} in/hr`;
-          document.getElementById('status').innerText = `Based on last ${minutesDelta.toFixed(0)} minutes`;
+          document.getElementById('davis-rr').innerText = customRR.toFixed(1) + ' mm/h';
         }
 
         lastRain = currentRain;
         lastTime = now;
-      } catch (err) {
-        document.getElementById('status').innerText = "Error loading data";
+
+      } catch (e) {
+        console.error(e);
       }
     }
 
