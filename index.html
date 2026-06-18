@@ -83,4 +83,43 @@
 
         // Temperature (convert F to C)
         document.getElementById('temp').innerText = d.tempf ? ((d.tempf - 32) * 5/9).toFixed(1) + '°C' : '--';
-        document.getElementById('feelslike').innerText = d.feelsLike ? ((d.feelsLike - 32) * 5/9).toFixed(1) + '°C' :
+        document.getElementById('feelslike').innerText = d.feelsLike ? ((d.feelsLike - 32) * 5/9).toFixed(1) + '°C' : '--';
+        document.getElementById('tempmax').innerText = d.maxtempf ? ((d.maxtempf - 32) * 5/9).toFixed(1) : '--';
+        document.getElementById('tempmin').innerText = d.mintempf ? ((d.mintempf - 32) * 5/9).toFixed(1) : '--';
+
+        document.getElementById('humidity').innerText = d.humidity || '--';
+        document.getElementById('pressure').innerText = d.baromrelin || '--';
+        document.getElementById('dewpoint').innerText = d.dewptf ? ((d.dewptf - 32) * 5/9).toFixed(1) : '--';
+
+        // Wind
+        document.getElementById('windspeed').innerText = d.windspeedmph ? (d.windspeedmph * 1.60934).toFixed(1) + ' km/h' : '--';
+        document.getElementById('winddirtext').innerText = d.winddir ? d.winddir + '°' : '--';
+        document.getElementById('gust').innerText = d.windgustmph ? (d.windgustmph * 1.60934).toFixed(1) + ' km/h' : '--';
+
+        // Rainfall
+        document.getElementById('totalrain').innerText = (d.dailyrainin || 0).toFixed(1) + ' mm';
+        document.getElementById('ambient-rr').innerText = (d.rainRate || 0).toFixed(1) + ' mm/h';
+
+        // Davis-style Instant RR
+        const now = Date.now();
+        const currentRain = d.hourlyrainin || 0;
+        if (lastRain !== null && lastTime !== null) {
+          const delta = currentRain - lastRain;
+          const minDelta = (now - lastTime) / (1000 * 60);
+          let custom = 0;
+          if (minDelta > 0 && delta > 0) custom = (delta / minDelta) * 60;
+          document.getElementById('davis-rr').innerText = custom.toFixed(1) + ' mm/h';
+        }
+        lastRain = currentRain;
+        lastTime = now;
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    setInterval(fetchData, 60000);
+    fetchData();
+  </script>
+</body>
+</html>
