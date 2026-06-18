@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Weather - Davis Style RR</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #0f172a; color: #e2e8f0; text-align: center; }
+    .card { background: #1e2937; padding: 25px; border-radius: 16px; margin: 20px auto; max-width: 600px; }
+    .rr { font-size: 3.5rem; font-weight: bold; color: #67e8f9; margin: 10px 0; }
+    .label { color: #94a3b8; font-size: 1.1rem; }
+    button { padding: 12px 30px; background: #22d3ee; color: black; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🌧️ My Weather Station - Davis Style Rain Rate</h1>
+  
+  <div class="card">
+    <p class="label">Ambient Official Rain Rate</p>
+    <div id="ambient-rr" class="rr">-- in/hr</div>
+  </div>
+
+  <div class="card">
+    <p class="label">🟢 Davis-like Instant Rain Rate</p>
+    <div id="davis-rr" class="rr">-- in/hr</div>
+    <p class="label" id="status">Waiting for data...</p>
+  </div>
+
+  <button onclick="fetchData()">🔄 Refresh Now</button>
+
+  <script>
+    const API_KEY = '4300811983344786a59530f53647923c9a5a5141ea0348f59eb5ca3694dc10dc';
+    const APP_KEY = '550017c1906c44da8ff6460bc99c29a700c6c4ede4ce4475a1a1d19c023a4e92';
+    const MAC = 'BC:FF:4D:81:C0:2C';
+
+    let lastRain = null;
+    let lastTime = null;
+
+    async function fetchData() {
+      try {
+        const res = await fetch(`https://api.ambientweather.net/v1/devices/${MAC}?apiKey=${API_KEY}&applicationKey=${APP_KEY}`);
+        const data = await res.json();
+        const d = data[0];
+
+        document.getElementById('ambient-rr').innerText = `${(d.rainRate || 0).toFixed(2)} in/hr`;
+
+        const now = Date.now();
+        const currentRain = d.hourlyrainin || d.dailyrainin || 0;
+
+        if (lastRain !== null && lastTime !== null) {
+          const rainDelta = currentRain - lastRain;
+          const minutesDelta = (now - lastTime) / (1000 * 60);
+          let customRR = 0;
+          if (minutesDelta > 0 && rainDelta > 0) {
+            customRR = (rainDelta / minutesDelta) * 60;
+          }
+          document.getElementById('davis-rr').innerText = `${customRR.toFixed(2)} in/hr`;
+          document.getElementById('status').innerText = `Based on last ${minutesDelta.toFixed(0)} minutes`;
+        }
+
+        lastRain = currentRain;
+        lastTime = now;
+      } catch (err) {
+        document.getElementById('status').innerText = "Error loading data";
+      }
+    }
+
+    setInterval(fetchData, 60000);
+    fetchData();
+  </script>
+</body>
+</html>
