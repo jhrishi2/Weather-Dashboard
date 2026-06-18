@@ -3,68 +3,111 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Ambient Weather Station</title>
+  <title>My Weather Station - Live</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #0f172a; color: #e2e8f0; }
-    .container { max-width: 1100px; margin: auto; }
-    h1 { text-align: center; color: #67e8f9; }
-    .card { background: #1e2937; padding: 20px; border-radius: 16px; margin: 15px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-    .big { font-size: 3.2rem; font-weight: bold; margin: 8px 0; }
-    .row { display: flex; flex-wrap: wrap; gap: 15px; }
-    .item { flex: 1; min-width: 300px; }
-    .label { color: #94a3b8; font-size: 0.95rem; }
-    button { padding: 12px 30px; background: #22d3ee; color: #000; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; display: block; margin: 20px auto; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #0a0f1c;
+      color: #e2e8f0;
+    }
+    .container { max-width: 1200px; margin: auto; }
+    h1 { text-align: center; color: #60a5fa; margin-bottom: 30px; font-size: 2.2rem; }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    
+    .card {
+      background: #111827;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    
+    .card h2 {
+      margin: 0 0 20px 0;
+      color: #93c5fd;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .value {
+      font-size: 3.2rem;
+      font-weight: 700;
+      margin: 8px 0;
+    }
+    
+    .small { font-size: 1.1rem; color: #cbd5e1; }
+    .unit { font-size: 1rem; color: #94a3b8; }
+    
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      display: block;
+      margin: 30px auto;
+    }
+    button:hover { background: #2563eb; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🌧️ My Ambient Weather Station</h1>
-
-    <div class="row">
+    <h1>🌡️ My Personal Weather Station</h1>
+    
+    <div class="grid">
       <!-- Temperature -->
-      <div class="card item">
-        <h2>TEMPERATURE</h2>
-        <div id="temp" class="big">--°C</div>
-        <div>Feels Like: <span id="feelslike">--°C</span></div>
-        <div>Max: <span id="tempmax">--°C</span> | Min: <span id="tempmin">--°C</span></div>
+      <div class="card">
+        <h2>Temperature</h2>
+        <div id="temp" class="value">--°C</div>
+        <div>Feels Like: <span id="feels" class="small">--°C</span></div>
+        <div style="margin-top:15px;">
+          Max: <span id="tempmax" class="small">--°C</span> &nbsp;&nbsp; 
+          Min: <span id="tempmin" class="small">--°C</span>
+        </div>
       </div>
 
-      <!-- Humidity & Pressure -->
-      <div class="card item">
-        <h2>HUMIDITY & PRESSURE</h2>
-        <div>Humidity: <span id="humidity" class="big">--%</span></div>
-        <div>Pressure: <span id="pressure">-- hPa</span></div>
-        <div>Dew Point: <span id="dewpoint">--°C</span></div>
-      </div>
-    </div>
-
-    <div class="row">
       <!-- Wind -->
-      <div class="card item">
-        <h2>WIND</h2>
-        <div id="windspeed" class="big">-- km/h</div>
-        <div id="winddirtext">--</div>
-        <div>Gust: <span id="gust">-- km/h</span></div>
+      <div class="card">
+        <h2>Wind</h2>
+        <div id="wind" class="value">-- km/h</div>
+        <div id="winddir" class="small">--</div>
+        <div style="margin-top:15px;">
+          Gust: <span id="gust" class="small">-- km/h</span>
+        </div>
       </div>
 
-      <!-- Rainfall (Main Focus) -->
-      <div class="card item">
-        <h2>RAINFALL</h2>
-        <div>Total Today: <span id="totalrain" class="big">-- mm</span></div>
+      <!-- Rainfall -->
+      <div class="card">
+        <h2>Rainfall</h2>
+        <div>Total Today: <span id="totalrain" class="value">-- mm</span></div>
         
-        <div style="margin-top:15px;">
-          <span class="label">Ambient Rain Rate</span><br>
-          <span id="ambient-rr" class="big" style="color:#f87171;">-- mm/h</span>
+        <div style="margin-top:20px;">
+          <div>Ambient RR: <span id="ambientrr" class="value" style="font-size:2.4rem;color:#f87171;">-- mm/h</span></div>
+          <div>Davis Instant RR: <span id="davisrr" class="value" style="font-size:2.4rem;color:#22d3ee;">-- mm/h</span></div>
         </div>
-        
-        <div style="margin-top:15px;">
-          <span class="label">🟢 Davis-style Instant RR</span><br>
-          <span id="davis-rr" class="big" style="color:#67e8f9;">-- mm/h</span>
-        </div>
+      </div>
+
+      <!-- Pressure & Humidity -->
+      <div class="card">
+        <h2>Pressure & Humidity</h2>
+        <div>Humidity: <span id="humidity" class="value">--%</span></div>
+        <div>Pressure: <span id="pressure" class="value">-- hPa</span></div>
+        <div>Dew Point: <span id="dewpoint" class="small">--°C</span></div>
       </div>
     </div>
 
-    <button onclick="fetchData()">🔄 Refresh All Data Now</button>
+    <button onclick="fetchData()">🔄 Refresh All Data</button>
   </div>
 
   <script>
@@ -81,37 +124,38 @@
         const data = await res.json();
         const d = data[0];
 
-        // Temperature (convert F to C)
+        // Temperature
         document.getElementById('temp').innerText = d.tempf ? ((d.tempf - 32) * 5/9).toFixed(1) + '°C' : '--';
-        document.getElementById('feelslike').innerText = d.feelsLike ? ((d.feelsLike - 32) * 5/9).toFixed(1) + '°C' : '--';
-        document.getElementById('tempmax').innerText = d.maxtempf ? ((d.maxtempf - 32) * 5/9).toFixed(1) : '--';
-        document.getElementById('tempmin').innerText = d.mintempf ? ((d.mintempf - 32) * 5/9).toFixed(1) : '--';
-
-        document.getElementById('humidity').innerText = d.humidity || '--';
-        document.getElementById('pressure').innerText = d.baromrelin || '--';
-        document.getElementById('dewpoint').innerText = d.dewptf ? ((d.dewptf - 32) * 5/9).toFixed(1) : '--';
+        document.getElementById('feels').innerText = d.feelsLike ? ((d.feelsLike - 32) * 5/9).toFixed(1) + '°C' : '--';
+        document.getElementById('tempmax').innerText = d.maxtempf ? ((d.maxtempf - 32) * 5/9).toFixed(1) + '°C' : '--';
+        document.getElementById('tempmin').innerText = d.mintempf ? ((d.mintempf - 32) * 5/9).toFixed(1) + '°C' : '--';
 
         // Wind
-        document.getElementById('windspeed').innerText = d.windspeedmph ? (d.windspeedmph * 1.60934).toFixed(1) + ' km/h' : '--';
-        document.getElementById('winddirtext').innerText = d.winddir ? d.winddir + '°' : '--';
+        document.getElementById('wind').innerText = d.windspeedmph ? (d.windspeedmph * 1.60934).toFixed(1) + ' km/h' : '--';
+        document.getElementById('winddir').innerText = d.winddir ? d.winddir + '°' : '--';
         document.getElementById('gust').innerText = d.windgustmph ? (d.windgustmph * 1.60934).toFixed(1) + ' km/h' : '--';
 
         // Rainfall
         document.getElementById('totalrain').innerText = (d.dailyrainin || 0).toFixed(1) + ' mm';
-        document.getElementById('ambient-rr').innerText = (d.rainRate || 0).toFixed(1) + ' mm/h';
+        document.getElementById('ambientrr').innerText = (d.rainRate || 0).toFixed(1) + ' mm/h';
 
-        // Davis-style Instant RR
+        // Davis RR
         const now = Date.now();
-        const currentRain = d.hourlyrainin || 0;
+        const current = d.hourlyrainin || 0;
         if (lastRain !== null && lastTime !== null) {
-          const delta = currentRain - lastRain;
-          const minDelta = (now - lastTime) / (1000 * 60);
+          const delta = current - lastRain;
+          const mins = (now - lastTime) / (1000 * 60);
           let custom = 0;
-          if (minDelta > 0 && delta > 0) custom = (delta / minDelta) * 60;
-          document.getElementById('davis-rr').innerText = custom.toFixed(1) + ' mm/h';
+          if (mins > 0 && delta > 0) custom = (delta / mins) * 60;
+          document.getElementById('davisrr').innerText = custom.toFixed(1) + ' mm/h';
         }
-        lastRain = currentRain;
+        lastRain = current;
         lastTime = now;
+
+        // Others
+        document.getElementById('humidity').innerText = d.humidity || '--';
+        document.getElementById('pressure').innerText = d.baromrelin ? d.baromrelin.toFixed(1) : '--';
+        document.getElementById('dewpoint').innerText = d.dewptf ? ((d.dewptf - 32) * 5/9).toFixed(1) + '°C' : '--';
 
       } catch (e) {
         console.error(e);
