@@ -1,137 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Weather Station - Davis Style</title>
-  <style>
-    body { 
-      font-family: 'Segoe UI', Arial, sans-serif; 
-      margin: 0; padding: 20px; 
-      background: #0f172a; 
-      color: #f1f5f9; 
+function processRainLogic(newDailyInches, currentTimeStamp, isCron = false) {
+     // If a user refresh happens, don't update the baseline or time
+    // Only the Cron should advance the "lastRainRaw" and "lastRainTime"
+    if (!isCron) {
+        return state.lastCalculatedRate; 
     }
-    .header { text-align: center; padding: 15px; background: #1e2937; border-radius: 12px; margin-bottom: 20px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
-    .card { 
-      background: #1e2937; 
-      padding: 20px; 
-      border-radius: 16px; 
-      border: 1px solid #334155;
+    const now = Date.now();
+    
+    if (state.lastRainRaw === null) {
+        state.lastRainRaw = newDailyInches;
+        state.lastRainTime = now;
+        return 0;
     }
-    .title { color: #60a5fa; font-size: 1rem; margin-bottom: 8px; text-transform: uppercase; }
-    .number { font-size: 3.8rem; font-weight: 700; margin: 8px 0; line-height: 1; }
-    .unit { font-size: 1.1rem; color: #94a3b8; }
-    button { 
-      width: 100%; padding: 16px; 
-      background: #3b82f6; color: white; 
-      border: none; border-radius: 12px; 
-      font-size: 1.1rem; margin-top: 10px; 
+
+    // --- MIDNIGHT RESET FIX ---
+    // If the API resets the daily total back to 0 (or a lower number)
+    if (newDailyInches < state.lastRainRaw) {
+        state.lastRainRaw = newDailyInches; // Reset our baseline tracker
+        return state.lastCalculatedRate;    // Exit without calculating a rate
     }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>🌧️ LIVE WEATHER STATION</h1>
-    <p style="color:#94a3b8;">Ambient Weather • Davis-style View</p>
-  </div>
+    // --------------------------
 
-  <div class="grid">
-    <div class="card">
-      <div class="title">Temperature</div>
-      <div id="temp" class="number">--</div>
-      <div class="unit">°C</div>
-      <div style="margin-top:12px; font-size:1rem;">
-        Max <span id="tempmax" style="color:#f87171;">--</span> | 
-        Min <span id="tempmin" style="color:#60a5fa;">--</span>
-      </div>
-    </div>
+    const deltaRain = newDailyInches - state.lastRainRaw;
 
-    <div class="card">
-      <div class="title">Wind</div>
-      <div id="wind" class="number">--</div>
-      <div class="unit">km/h</div>
-      <div id="winddir" style="margin-top:8px;">--</div>
-      <div>Gust: <span id="gust">-- km/h</span></div>
-    </div>
+    if (deltaRain > 0.0001) { 
+        let timeSinceLastTipSec = (now - state.lastRainTime) / 1000;
 
-    <div class="card">
-      <div class="title">Rainfall</div>
-      <div id="totalrain" class="number">--</div>
-      <div class="unit">mm today</div>
-      
-      <div style="margin-top:20px;">
-        <div style="color:#f87171;">Ambient RR: <span id="ambientrr">-- mm/h</span></div>
-        <div style="color:#22d3ee;">Instant RR: <span id="davisrr">-- mm/h</span></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="title">Conditions</div>
-      <div class="row" style="display:flex; gap:30px;">
-        <div>
-          Humidity<br><span id="humidity" class="number" style="font-size:2.8rem;">--</span>%
-        </div>
-        <div>
-          Pressure<br><span id="pressure" class="number" style="font-size:2.8rem;">--</span>
-        </div>
-      </div>
-      <div>Dew Point: <span id="dewpoint">--°C</span></div>
-    </div>
-  </div>
-
-  <button onclick="fetchData()">🔄 Update Now</button>
-
-  <script>
-    const API_KEY = '4300811983344786a59530f53647923c9a5a5141ea0348f59eb5ca3694dc10dc';
-    const APP_KEY = '550017c1906c44da8ff6460bc99c29a700c6c4ede4ce4475a1a1d19c023a4e92';
-    const MAC = 'BC:FF:4D:81:C0:2C';
-
-    let lastRain = null;
-    let lastTime = null;
-
-    async function fetchData() {
-      try {
-        const res = await fetch(`https://api.ambientweather.net/v1/devices/${MAC}?apiKey=${API_KEY}&applicationKey=${APP_KEY}`);
-        const data = await res.json();
-        const d = data[0];
-
-        // Temperature in °C
-        document.getElementById('temp').innerText = d.tempf ? ((d.tempf - 32) * 5/9).toFixed(1) : '--';
-        document.getElementById('tempmax').innerText = d.maxtempf ? ((d.maxtempf - 32) * 5/9).toFixed(1) : '--';
-        document.getElementById('tempmin').innerText = d.mintempf ? ((d.mintempf - 32) * 5/9).toFixed(1) : '--';
-
-        document.getElementById('wind').innerText = d.windspeedmph ? (d.windspeedmph * 1.60934).toFixed(1) : '--';
-        document.getElementById('winddir').innerText = d.winddir ? d.winddir + '°' : '--';
-        document.getElementById('gust').innerText = d.windgustmph ? (d.windgustmph * 1.60934).toFixed(1) : '--';
-
-        document.getElementById('totalrain').innerText = (d.dailyrainin || 0).toFixed(1);
-        document.getElementById('ambientrr').innerText = (d.rainRate || 0).toFixed(1);
-        
-        // Davis RR
-        const now = Date.now();
-        const current = d.hourlyrainin || 0;
-        if (lastRain !== null && lastTime !== null) {
-          const delta = current - lastRain;
-          const mins = (now - lastTime) / (1000 * 60);
-          let custom = 0;
-          if (mins > 0 && delta > 0) custom = (delta / mins) * 60;
-          document.getElementById('davisrr').innerText = custom.toFixed(1);
+        if (timeSinceLastTipSec > 600) {
+            timeSinceLastTipSec = 60; 
         }
-        lastRain = current;
-        lastTime = now;
 
-        document.getElementById('humidity').innerText = d.humidity || '--';
-        document.getElementById('pressure').innerText = d.baromrelin ? d.baromrelin.toFixed(1) : '--';
-        document.getElementById('dewpoint').innerText = d.dewptf ? ((d.dewptf - 32) * 5/9).toFixed(1) : '--';
+        const effectiveTime = Math.max(timeSinceLastTipSec, 60);
+        
+        state.lastCalculatedRate = deltaRain * (3600 / effectiveTime);
+        
+        state.lastRainRaw = newDailyInches;
+        state.lastRainTime = now; 
+    } 
 
-      } catch (e) {
-        console.error(e);
-      }
+    if (state.lastCalculatedRate > (state.bufRR || 0)) { 
+        state.bufRR = state.lastCalculatedRate; 
+        state.tRR = currentTimeStamp; 
     }
-
-    setInterval(fetchData, 60000);
-    fetchData();
-  </script>
-</body>
-</html>
+    
+    return state.lastCalculatedRate;
+}
